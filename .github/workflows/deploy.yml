@@ -73,13 +73,12 @@ jobs:
           EOF
           
           # Run the admin container directly (no docker-compose to avoid affecting other containers)
+          # Using --network host like the main addressverify app to access localhost MongoDB
           docker run -d \
             --name addressverify-admin \
             --restart unless-stopped \
-            -p 4000:4000 \
+            --network host \
             --env-file .env \
-            --add-host host.docker.internal:host-gateway \
-            --network bridge \
             addressverify-admin:latest
           
           # Wait for service to be healthy
