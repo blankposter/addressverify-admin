@@ -505,30 +505,62 @@ const formatJson = (jsonString) => {
 const getAddressFromRequest = (request) => {
   try {
     if (request.input_data) {
-      const inputData = typeof request.input_data === 'string' 
-        ? JSON.parse(request.input_data) 
-        : request.input_data
+      // If input_data is already a string (like in your example), return it directly
+      if (typeof request.input_data === 'string') {
+        // Try to parse as JSON first, if it fails, return the string as-is
+        try {
+          const parsedData = JSON.parse(request.input_data)
+          // If it's a parsed object, look for address fields
+          if (typeof parsedData === 'object' && parsedData !== null) {
+            if (parsedData.address) return parsedData.address
+            if (parsedData.query) return parsedData.query
+            if (parsedData.street) return parsedData.street
+            if (parsedData.location) return parsedData.location
+            
+            // If it's a formatted address with components
+            const addressParts = []
+            if (parsedData.street_number) addressParts.push(parsedData.street_number)
+            if (parsedData.street_name) addressParts.push(parsedData.street_name)
+            if (parsedData.city) addressParts.push(parsedData.city)
+            if (parsedData.state) addressParts.push(parsedData.state)
+            if (parsedData.zip || parsedData.postal_code) addressParts.push(parsedData.zip || parsedData.postal_code)
+            
+            if (addressParts.length > 0) {
+              return addressParts.join(', ')
+            }
+          }
+        } catch (parseError) {
+          // If parsing fails, it's likely just a plain address string
+          return request.input_data
+        }
+        
+        // If we get here, return the string as-is
+        return request.input_data
+      }
       
-      // Look for common address fields
-      if (inputData.address) return inputData.address
-      if (inputData.query) return inputData.query
-      if (inputData.street) return inputData.street
-      if (inputData.location) return inputData.location
-      
-      // If it's a formatted address with components
-      const addressParts = []
-      if (inputData.street_number) addressParts.push(inputData.street_number)
-      if (inputData.street_name) addressParts.push(inputData.street_name)
-      if (inputData.city) addressParts.push(inputData.city)
-      if (inputData.state) addressParts.push(inputData.state)
-      if (inputData.zip || inputData.postal_code) addressParts.push(inputData.zip || inputData.postal_code)
-      
-      if (addressParts.length > 0) {
-        return addressParts.join(', ')
+      // If input_data is already an object
+      if (typeof request.input_data === 'object' && request.input_data !== null) {
+        if (request.input_data.address) return request.input_data.address
+        if (request.input_data.query) return request.input_data.query
+        if (request.input_data.street) return request.input_data.street
+        if (request.input_data.location) return request.input_data.location
+        
+        // If it's a formatted address with components
+        const addressParts = []
+        if (request.input_data.street_number) addressParts.push(request.input_data.street_number)
+        if (request.input_data.street_name) addressParts.push(request.input_data.street_name)
+        if (request.input_data.city) addressParts.push(request.input_data.city)
+        if (request.input_data.state) addressParts.push(request.input_data.state)
+        if (request.input_data.zip || request.input_data.postal_code) addressParts.push(request.input_data.zip || request.input_data.postal_code)
+        
+        if (addressParts.length > 0) {
+          return addressParts.join(', ')
+        }
       }
     }
     return 'N/A'
   } catch (error) {
+    console.error('Error extracting address from request:', error)
     return 'N/A'
   }
 }
