@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as bcrypt from 'bcryptjs';
-import * as speakeasy from 'speakeasy';
 import { Admin, AdminDocument } from '../../schemas/admin.schema';
 
 @Injectable()
@@ -53,14 +51,9 @@ export class AdminSeeder {
         continue;
       }
 
-      // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(adminData.password, salt);
-
-      // Create admin (2FA will be set up later through the UI)
+      // Create admin (password will be hashed by schema middleware)
       const admin = new this.adminModel({
         ...adminData,
-        password: hashedPassword,
         passwordChangedAt: new Date(),
       });
 
