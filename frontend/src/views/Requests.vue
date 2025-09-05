@@ -116,8 +116,8 @@
                     @change="loadRequests"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   >
-                    <option value="failed">Failed Requests Only</option>
                     <option value="all">All Requests</option>
+                    <option value="failed">Failed Requests Only</option>
                   </select>
                 </div>
                 <div>
@@ -149,14 +149,17 @@
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">User ID</label>
-                  <input
+                  <label class="block text-sm font-medium text-gray-700">User</label>
+                  <select
                     v-model="filterUserId"
-                    @input="debounceSearch"
-                    type="text"
-                    placeholder="Filter by user ID..."
+                    @change="loadRequests"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
+                  >
+                    <option value="">All Users</option>
+                    <option v-for="user in availableUsers" :key="user.value" :value="user.value">
+                      {{ user.label }}
+                    </option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -191,6 +194,7 @@
                     <tr>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Endpoint</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address Searched</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Response Time</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
@@ -208,6 +212,9 @@
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">{{ request.endpoint }}</div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ getAddressFromRequest(request) }}</div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">{{ request.userEmail || 'Unknown' }}</div>
@@ -394,10 +401,11 @@ const authStore = useAuthStore()
 
 const stats = ref(null)
 const requests = ref([])
+const availableUsers = ref([])
 const loading = ref(false)
 const selectedRequest = ref(null)
 
-const viewMode = ref('failed')
+const viewMode = ref('all')
 const filterStatusCode = ref('')
 const filterEndpoint = ref('')
 const filterUserId = ref('')
@@ -494,6 +502,57 @@ const formatJson = (jsonString) => {
   }
 }
 
+const getAddressFromRequest = (request) => {
+  try {
+    if (request.input_data) {
+      const inputData = typeof request.input_data === 'string' 
+        ? JSON.parse(request.input_data) 
+        : request.input_data
+      
+      // Look for common address fields
+      if (inputData.address) return inputData.address
+      if (inputData.query) return inputData.query
+      if (inputData.street) return inputData.street
+      if (inputData.location) return inputData.location
+      
+      // If it's a formatted address with components
+      const addressParts = []
+      if (inputData.street_number) addressParts.push(inputData.street_number)
+      if (inputData.street_name) addressParts.push(inputData.street_name)
+      if (inputData.city) addressParts.push(inputData.city)
+      if (inputData.state) addressParts.push(inputData.state)
+      if (inputData.zip || inputData.postal_code) addressParts.push(inputData.zip || inputData.postal_code)
+      
+      if (addressParts.length > 0) {
+        return addressParts.join(', ')
+      }
+    }
+    return 'N/A'
+  } catch (error) {
+    return 'N/A'
+  }
+}
+
+const loadUsers = async () => {
+  try {
+    const response = await api.get('/api/admin/users', {
+      params: {
+        page: 1,
+        limit: 100,
+        sortBy: 'email',
+        sortOrder: 'asc'
+      }
+    })
+    
+    availableUsers.value = response.data.users.map(user => ({
+      value: user._id,
+      label: `${user.email} (${user._id.substring(0, 8)}...)`
+    }))
+  } catch (error) {
+    console.error('Error loading users:', error)
+  }
+}
+
 const previousPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--
@@ -515,6 +574,7 @@ const goToPage = (page) => {
 
 onMounted(() => {
   loadStats()
+  loadUsers()
   loadRequests()
 })
 </script>

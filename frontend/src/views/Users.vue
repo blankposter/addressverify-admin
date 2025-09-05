@@ -109,25 +109,200 @@
             </div>
           </div>
 
-          <!-- Search and Filters -->
+          <!-- Advanced Search and Filters -->
           <div class="bg-white shadow rounded-lg mb-8">
             <div class="px-4 py-5 sm:p-6">
-              <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                  <input
-                    v-model="searchQuery"
-                    @input="debounceSearch"
-                    type="text"
-                    placeholder="Search by email or Stripe ID..."
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  />
+              <div class="space-y-4">
+                <!-- Basic Search -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Search Email/Stripe ID</label>
+                    <input
+                      v-model="searchQuery"
+                      @input="debounceSearch"
+                      type="text"
+                      placeholder="Search by email or Stripe ID..."
+                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <select
+                      v-model="filters.status"
+                      @change="applyFilters"
+                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="suspended">Suspended</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Email Verified</label>
+                    <select
+                      v-model="filters.emailVerified"
+                      @change="applyFilters"
+                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                      <option value="">All</option>
+                      <option value="true">Verified</option>
+                      <option value="false">Unverified</option>
+                    </select>
+                  </div>
                 </div>
-                <button
-                  @click="loadUsers"
-                  class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  Search
-                </button>
+                
+                <!-- Advanced Filters Toggle -->
+                <div class="flex items-center justify-between border-t pt-4">
+                  <button
+                    @click="showAdvancedFilters = !showAdvancedFilters"
+                    class="text-sm text-indigo-600 hover:text-indigo-500 font-medium flex items-center"
+                  >
+                    <span>{{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters</span>
+                    <svg class="ml-1 h-4 w-4 transform transition-transform" :class="{ 'rotate-180': showAdvancedFilters }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  <div class="flex items-center space-x-2">
+                    <button
+                      @click="clearFilters"
+                      class="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+                    >
+                      Clear Filters
+                    </button>
+                    <button
+                      @click="loadUsers"
+                      class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700"
+                    >
+                      Apply Filters
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Advanced Filters -->
+                <div v-if="showAdvancedFilters" class="space-y-4 border-t pt-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Provider</label>
+                      <select
+                        v-model="filters.provider"
+                        @change="applyFilters"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      >
+                        <option value="">All Providers</option>
+                        <option value="google">Google</option>
+                        <option value="email">Email</option>
+                        <option value="github">GitHub</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Has Seen Welcome</label>
+                      <select
+                        v-model="filters.hasSeenWelcome"
+                        @change="applyFilters"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      >
+                        <option value="">All</option>
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Sort By</label>
+                      <select
+                        v-model="sortBy"
+                        @change="applyFilters"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      >
+                        <option value="createdAt">Date Created</option>
+                        <option value="email">Email</option>
+                        <option value="last_login">Last Login</option>
+                        <option value="status">Status</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Limitation Range</label>
+                      <div class="grid grid-cols-2 gap-2">
+                        <input
+                          v-model="filters.limitationMin"
+                          @input="debounceSearch"
+                          type="number"
+                          placeholder="Min"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <input
+                          v-model="filters.limitationMax"
+                          @input="debounceSearch"
+                          type="number"
+                          placeholder="Max"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Budget Alert Range</label>
+                      <div class="grid grid-cols-2 gap-2">
+                        <input
+                          v-model="filters.budgetAlertMin"
+                          @input="debounceSearch"
+                          type="number"
+                          placeholder="Min"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <input
+                          v-model="filters.budgetAlertMax"
+                          @input="debounceSearch"
+                          type="number"
+                          placeholder="Max"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Created Date Range</label>
+                      <div class="grid grid-cols-2 gap-2">
+                        <input
+                          v-model="filters.createdAfter"
+                          @change="applyFilters"
+                          type="date"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <input
+                          v-model="filters.createdBefore"
+                          @change="applyFilters"
+                          type="date"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-end">
+                      <div class="w-full">
+                        <label class="block text-sm font-medium text-gray-700">Sort Order</label>
+                        <select
+                          v-model="sortOrder"
+                          @change="applyFilters"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        >
+                          <option value="desc">Newest First</option>
+                          <option value="asc">Oldest First</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -341,6 +516,24 @@ const stats = ref(null)
 const loading = ref(false)
 const searchQuery = ref('')
 const selectedUser = ref(null)
+const showAdvancedFilters = ref(false)
+
+// Filter states
+const filters = ref({
+  status: '',
+  emailVerified: '',
+  provider: '',
+  hasSeenWelcome: '',
+  limitationMin: '',
+  limitationMax: '',
+  budgetAlertMin: '',
+  budgetAlertMax: '',
+  createdAfter: '',
+  createdBefore: ''
+})
+
+const sortBy = ref('createdAt')
+const sortOrder = ref('desc')
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -363,13 +556,22 @@ const visiblePages = computed(() => {
 const loadUsers = async () => {
   loading.value = true
   try {
-    const response = await api.get('/api/admin/users', {
-      params: {
-        page: currentPage.value,
-        limit: pageSize.value,
-        search: searchQuery.value
+    const params = {
+      page: currentPage.value,
+      limit: pageSize.value,
+      search: searchQuery.value,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value
+    }
+    
+    // Add active filters
+    Object.keys(filters.value).forEach(key => {
+      if (filters.value[key] !== '') {
+        params[key] = filters.value[key]
       }
     })
+    
+    const response = await api.get('/api/admin/users', { params })
     
     users.value = response.data.users
     totalUsers.value = response.data.total
@@ -444,6 +646,22 @@ const nextPage = () => {
 
 const goToPage = (page) => {
   currentPage.value = page
+  loadUsers()
+}
+
+const applyFilters = () => {
+  currentPage.value = 1
+  loadUsers()
+}
+
+const clearFilters = () => {
+  searchQuery.value = ''
+  Object.keys(filters.value).forEach(key => {
+    filters.value[key] = ''
+  })
+  sortBy.value = 'createdAt'
+  sortOrder.value = 'desc'
+  currentPage.value = 1
   loadUsers()
 }
 
