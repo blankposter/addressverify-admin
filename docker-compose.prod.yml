@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # AddressVerify Admin Panel - Production
+  addressverify-admin:
+    container_name: addressverify-admin
+    image: addressverify-admin:latest
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    extra_hosts:
+      # Allow container to connect to MongoDB/Redis/RabbitMQ on host
+      - "host.docker.internal:host-gateway"
+    networks:
+      - admin-network-prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/admin/auth/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.addressverify.service=admin"
+      - "com.addressverify.environment=production"
+
+networks:
+  admin-network-prod:
+    driver: bridge
+    name: addressverify-admin-prod-network

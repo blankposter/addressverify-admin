@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # AddressVerify Admin Panel - Isolated Container
+  addressverify-admin:
+    container_name: addressverify-admin
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: addressverify-admin:latest
+    restart: unless-stopped
+    ports:
+      - "4000:4000"  # Admin panel on port 4000
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      # Connect to MongoDB on host machine
+      - MONGODB_URI=${MONGODB_URI:-mongodb://host.docker.internal:27017/addressverify}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - TWO_FACTOR_APP_NAME=${TWO_FACTOR_APP_NAME:-AddressVerify Admin}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:4000}
+      - SESSION_SECRET=${SESSION_SECRET}
+    extra_hosts:
+      # Allow container to connect to services on host
+      - "host.docker.internal:host-gateway"
+    networks:
+      - admin-network
+    labels:
+      - "com.addressverify.service=admin"
+      - "com.addressverify.description=Admin Panel for AddressVerify"
+      - "com.addressverify.port=4000"
+
+networks:
+  admin-network:
+    driver: bridge
+    name: addressverify-admin-network

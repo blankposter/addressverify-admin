@@ -215,7 +215,7 @@ export class PackagesService {
         return { success: false, error: 'Package not found' };
       }
 
-      const { _id, createdAt, updatedAt, ...packageData } = originalPackage;
+      const { _id, createdAt, updatedAt, __v, ...packageData } = originalPackage as any;
       
       const duplicatedPackage = new this.packageModel({
         ...packageData,

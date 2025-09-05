@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PackagesService, CreatePackageDto } from './packages.service';
+import { PackagesService } from './packages.service';
+import type { CreatePackageDto } from './packages.service';
 import { PackageStatus, PackageType } from '../../schemas/enterprise-package.schema';
 
 @Controller('api/admin/packages')

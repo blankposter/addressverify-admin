@@ -64,6 +64,7 @@ export class UsersService {
         return {
           ...user,
           _id: user._id.toString(),
+          createdAt: (user as any).createdAt || new Date(),
           subscriptions,
           totalSpent: subscriptions.reduce((sum, sub) => sum + (sub.usage_count || 0) * 0.01, 0),
           activeSubsCount: subscriptions.filter(sub => sub.status === 'active').length,
@@ -91,6 +92,7 @@ export class UsersService {
     return {
       ...user,
       _id: user._id.toString(),
+      createdAt: (user as any).createdAt || new Date(),
       subscriptions,
       totalSpent: subscriptions.reduce((sum, sub) => sum + (sub.usage_count || 0) * 0.01, 0),
       activeSubsCount: subscriptions.filter(sub => sub.status === 'active').length,

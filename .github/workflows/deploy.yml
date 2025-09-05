@@ -3,72 +3,98 @@ name: Deploy Admin Panel
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Run linting
-      run: npm run lint
-    
-    - name: Run tests
-      run: npm run test
-    
-    - name: Build backend
-      run: npm run build
-    
-    - name: Build frontend
-      run: npm run frontend:build
-
-  deploy:
-    needs: test
+  build-and-deploy:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -t addressverify-admin:latest .
+    
+    - name: Save Docker image
+      run: |
+        docker save addressverify-admin:latest | gzip > addressverify-admin-image.tar.gz
+    
+    - name: Copy files to server
+      uses: appleboy/scp-action@v0.1.7
       with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Build application
-      run: npm run build:full
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        source: "addressverify-admin-image.tar.gz"
+        target: "/home/${{ secrets.SERVER_USER }}/addressverify-admin"
     
     - name: Deploy to server
-      uses: appleboy/ssh-action@v0.1.8
+      uses: appleboy/ssh-action@v0.1.10
       with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.PRIVATE_KEY }}
-        port: ${{ secrets.PORT }}
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
-          cd /var/www/addressverify-admin
-          git pull origin main
-          npm ci --production
-          npm run build:full
-          pm2 restart addressverify-admin
-    
-    - name: Health check
-      run: |
-        sleep 30
-        curl -f http://${{ secrets.HOST }}:4000/health || exit 1
+          cd /home/${{ secrets.SERVER_USER }}/addressverify-admin
+          
+          # Load the new Docker image
+          gunzip -c addressverify-admin-image.tar.gz | docker load
+          
+          # Stop ONLY the admin container (not affecting API container)
+          docker stop addressverify-admin 2>/dev/null || true
+          docker rm addressverify-admin 2>/dev/null || true
+          
+          # Create .env file for admin panel
+          cat > .env << EOF
+          NODE_ENV=production
+          PORT=4000
+          
+          # MongoDB (connects to host)
+          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          
+          # JWT for admin panel
+          JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
+          JWT_EXPIRES_IN=${{ secrets.ADMIN_JWT_EXPIRES_IN }}
+          
+          # 2FA
+          TWO_FACTOR_APP_NAME=${{ secrets.TWO_FACTOR_APP_NAME }}
+          
+          # CORS
+          CORS_ORIGIN=${{ secrets.ADMIN_CORS_ORIGIN }}
+          
+          # Session
+          SESSION_SECRET=${{ secrets.ADMIN_SESSION_SECRET }}
+          EOF
+          
+          # Run the admin container directly (no docker-compose to avoid affecting other containers)
+          docker run -d \
+            --name addressverify-admin \
+            --restart unless-stopped \
+            -p 4000:4000 \
+            --env-file .env \
+            --add-host host.docker.internal:host-gateway \
+            --network bridge \
+            addressverify-admin:latest
+          
+          # Wait for service to be healthy
+          echo "Waiting for admin panel to start..."
+          sleep 20
+          
+          # Check container status
+          docker ps | grep addressverify-admin
+          docker logs addressverify-admin --tail=50
+          
+          # Clean up
+          rm addressverify-admin-image.tar.gz
+          
+          # Test health endpoint
+          echo "Testing admin panel health..."
+          curl -f http://localhost:4000/api/admin/auth/health || echo "Admin health check failed"
+          
+          echo "Admin panel deployment completed!"

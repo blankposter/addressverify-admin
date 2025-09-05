@@ -15,6 +15,10 @@ const path_1 = require("path");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const auth_module_1 = require("./modules/auth/auth.module");
+const users_module_1 = require("./modules/users/users.module");
+const credits_module_1 = require("./modules/credits/credits.module");
+const requests_module_1 = require("./modules/requests/requests.module");
+const packages_module_1 = require("./modules/packages/packages.module");
 const admin_seed_1 = require("./database/seeds/admin.seed");
 const admin_schema_1 = require("./schemas/admin.schema");
 let AppModule = class AppModule {
@@ -37,6 +41,10 @@ exports.AppModule = AppModule = __decorate([
                 serveRoot: '/',
             }),
             auth_module_1.AuthModule,
+            users_module_1.UsersModule,
+            credits_module_1.CreditsModule,
+            requests_module_1.RequestsModule,
+            packages_module_1.PackagesModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService, admin_seed_1.AdminSeeder],
