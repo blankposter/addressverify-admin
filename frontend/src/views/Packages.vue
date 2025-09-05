@@ -162,54 +162,54 @@
           </div>
 
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-for="package in packages" :key="package._id" 
+            <div v-for="pkg in packages" :key="pkg._id" 
                  class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
               <div class="px-4 py-5 sm:p-6">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-lg font-medium text-gray-900">{{ package.name }}</h3>
+                  <h3 class="text-lg font-medium text-gray-900">{{ pkg.name }}</h3>
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                        :class="getStatusClass(package.status)">
-                    {{ package.status }}
+                        :class="getStatusClass(pkg.status)">
+                    {{ pkg.status }}
                   </span>
                 </div>
                 
-                <p class="text-sm text-gray-500 mb-4">{{ package.description }}</p>
+                <p class="text-sm text-gray-500 mb-4">{{ pkg.description }}</p>
                 
                 <div class="space-y-2 mb-4">
                   <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Type:</span>
-                    <span class="text-sm font-medium capitalize">{{ package.type }}</span>
+                    <span class="text-sm font-medium capitalize">{{ pkg.type }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Monthly:</span>
-                    <span class="text-sm font-medium">${{ package.monthlyPrice.toLocaleString() }}</span>
+                    <span class="text-sm font-medium">${{ pkg.monthlyPrice.toLocaleString() }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Yearly:</span>
-                    <span class="text-sm font-medium">${{ package.yearlyPrice.toLocaleString() }}</span>
+                    <span class="text-sm font-medium">${{ pkg.yearlyPrice.toLocaleString() }}</span>
                   </div>
-                  <div v-if="package.isCustom" class="flex justify-between">
+                  <div v-if="pkg.isCustom" class="flex justify-between">
                     <span class="text-sm text-gray-600">Customer:</span>
-                    <span class="text-sm font-medium">{{ package.customerEmail || 'N/A' }}</span>
+                    <span class="text-sm font-medium">{{ pkg.customerEmail || 'N/A' }}</span>
                   </div>
                 </div>
 
                 <div class="flex justify-between items-center pt-4 border-t">
                   <div class="flex space-x-2">
                     <button
-                      @click="viewPackage(package)"
+                      @click="viewPackage(pkg)"
                       class="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
                     >
                       View
                     </button>
                     <button
-                      @click="editPackage(package)"
+                      @click="editPackage(pkg)"
                       class="text-blue-600 hover:text-blue-900 text-sm font-medium"
                     >
                       Edit
                     </button>
                     <button
-                      @click="duplicatePackage(package._id)"
+                      @click="duplicatePackage(pkg._id)"
                       class="text-green-600 hover:text-green-900 text-sm font-medium"
                     >
                       Duplicate
@@ -217,21 +217,21 @@
                   </div>
                   <div class="flex space-x-2">
                     <button
-                      v-if="package.status !== 'active'"
-                      @click="updateStatus(package._id, 'active')"
+                      v-if="pkg.status !== 'active'"
+                      @click="updateStatus(pkg._id, 'active')"
                       class="text-green-600 hover:text-green-900 text-sm font-medium"
                     >
                       Activate
                     </button>
                     <button
-                      v-if="package.status === 'active'"
-                      @click="updateStatus(package._id, 'inactive')"
+                      v-if="pkg.status === 'active'"
+                      @click="updateStatus(pkg._id, 'inactive')"
                       class="text-yellow-600 hover:text-yellow-900 text-sm font-medium"
                     >
                       Deactivate
                     </button>
                     <button
-                      @click="deletePackage(package._id)"
+                      @click="deletePackage(pkg._id)"
                       class="text-red-600 hover:text-red-900 text-sm font-medium"
                     >
                       Delete
