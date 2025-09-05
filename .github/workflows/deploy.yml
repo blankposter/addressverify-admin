@@ -53,7 +53,7 @@ jobs:
           # Create .env file for admin panel
           cat > .env << EOF
           NODE_ENV=production
-          PORT=4000
+          PORT=8000
           
           # MongoDB (connects to host)
           MONGODB_URI=${{ secrets.MONGODB_URI }}
@@ -94,6 +94,6 @@ jobs:
           
           # Test health endpoint
           echo "Testing admin panel health..."
-          curl -f http://localhost:4000/api/admin/auth/health || echo "Admin health check failed"
+          curl -f http://localhost:8000/api/admin/auth/health || echo "Admin health check failed"
           
           echo "Admin panel deployment completed!"

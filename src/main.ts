@@ -14,7 +14,7 @@ async function bootstrap() {
   // Enable validation pipes
   app.useGlobalPipes(new ValidationPipe());
   
-  const port = process.env.PORT || 4000;
+  const port = process.env.PORT || 8000;
   await app.listen(port);
   
   console.log(`🚀 Admin server is running on: http://localhost:${port}`);
