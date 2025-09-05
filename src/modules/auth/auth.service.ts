@@ -117,7 +117,7 @@ export class AuthService {
       throw new BadRequestException('Admin not found');
     }
 
-    const isValid = this.verify2FAToken(admin.twoFactorSecret!, dto.token);
+    const isValid = this.verify2FAToken(admin.twoFactorSecret!, dto.twoFactorCode);
     if (!isValid) {
       throw new BadRequestException('Invalid verification code');
     }
@@ -163,5 +163,23 @@ export class AuthService {
 
   async findAdminById(id: string): Promise<AdminDocument> {
     return this.adminModel.findById(id).select('-password');
+  }
+
+  async getProfile(adminId: string) {
+    const admin = await this.adminModel.findById(adminId).select('-password -twoFactorSecret -twoFactorBackupCodes');
+    if (!admin) {
+      throw new BadRequestException('Admin not found');
+    }
+    
+    return {
+      id: admin._id,
+      username: admin.username,
+      email: admin.email,
+      fullName: admin.fullName,
+      isSuperAdmin: admin.isSuperAdmin,
+      twoFactorEnabled: admin.twoFactorEnabled,
+      lastLogin: admin.lastLogin,
+      createdAt: (admin as any).createdAt,
+    };
   }
 }

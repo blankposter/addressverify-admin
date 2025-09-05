@@ -21,7 +21,7 @@ export class Setup2FADto {
 
 export class Verify2FADto {
   @IsString()
-  token: string;
+  twoFactorCode: string;
 }
 
 export class Disable2FADto {

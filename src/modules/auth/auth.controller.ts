@@ -26,25 +26,37 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
-    return this.authService.findAdminById(req.user.sub);
+    return this.authService.getProfile(req.user.sub);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('2fa/setup')
   async setup2FA(@Request() req) {
-    return this.authService.setup2FA(req.user.sub);
+    const result = await this.authService.setup2FA(req.user.sub);
+    return {
+      success: true,
+      ...result
+    };
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('2fa/verify')
   async verify2FA(@Request() req, @Body() dto: Verify2FADto) {
-    return this.authService.verify2FA(req.user.sub, dto);
+    const result = await this.authService.verify2FA(req.user.sub, dto);
+    return {
+      success: true,
+      ...result
+    };
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('2fa/disable')
   async disable2FA(@Request() req, @Body() dto: Disable2FADto) {
-    return this.authService.disable2FA(req.user.sub, dto.password);
+    const result = await this.authService.disable2FA(req.user.sub, dto.password);
+    return {
+      success: true,
+      ...result
+    };
   }
 
   @UseGuards(JwtAuthGuard)
