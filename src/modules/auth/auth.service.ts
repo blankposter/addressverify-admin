@@ -16,20 +16,30 @@ export class AuthService {
   ) {}
 
   async validateAdmin(username: string, password: string): Promise<any> {
+    console.log(`🔍 Login attempt - Username: ${username}`);
+    
     const admin = await this.adminModel.findOne({ 
       $or: [{ username }, { email: username }],
       isActive: true 
     });
 
     if (!admin) {
+      console.log(`❌ Admin not found for username: ${username}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    console.log(`✅ Admin found: ${admin.username} (${admin.email})`);
+    console.log(`🔒 Comparing password with hash...`);
+    
     const isPasswordValid = await bcrypt.compare(password, admin.password);
+    console.log(`🔐 Password valid: ${isPasswordValid}`);
+    
     if (!isPasswordValid) {
+      console.log(`❌ Password comparison failed for ${admin.username}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    console.log(`✅ Login validation successful for ${admin.username}`);
     return admin;
   }
 
