@@ -19,7 +19,7 @@ export class AdminSeeder {
         password: 'David@Admin2024!',
         fullName: 'David Administrator',
         isSuperAdmin: true,
-        twoFactorEnabled: true,
+        twoFactorEnabled: false,
       },
       {
         username: 'misha',
@@ -27,7 +27,7 @@ export class AdminSeeder {
         password: 'Misha@Admin2024!',
         fullName: 'Misha Administrator',
         isSuperAdmin: true,
-        twoFactorEnabled: true,
+        twoFactorEnabled: false,
       },
       {
         username: 'amir',
@@ -35,7 +35,7 @@ export class AdminSeeder {
         password: 'Amir@Admin2024!',
         fullName: 'Amir Administrator',
         isSuperAdmin: true,
-        twoFactorEnabled: true,
+        twoFactorEnabled: false,
       },
     ];
 
@@ -57,23 +57,10 @@ export class AdminSeeder {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(adminData.password, salt);
 
-      // Generate 2FA secret
-      const secret = speakeasy.generateSecret({
-        name: `AddressVerify Admin (${adminData.email})`,
-        length: 32,
-      });
-
-      // Generate backup codes
-      const backupCodes = Array.from({ length: 10 }, () =>
-        Math.random().toString(36).substring(2, 10).toUpperCase(),
-      );
-
-      // Create admin
+      // Create admin (2FA will be set up later through the UI)
       const admin = new this.adminModel({
         ...adminData,
         password: hashedPassword,
-        twoFactorSecret: secret.base32,
-        twoFactorBackupCodes: backupCodes.map(code => bcrypt.hashSync(code, 10)),
         passwordChangedAt: new Date(),
       });
 
@@ -82,9 +69,7 @@ export class AdminSeeder {
       console.log(`✅ Admin created: ${adminData.username}`);
       console.log(`   Email: ${adminData.email}`);
       console.log(`   Password: ${adminData.password}`);
-      console.log(`   2FA Secret: ${secret.base32}`);
-      console.log(`   2FA QR Code: ${secret.otpauth_url}`);
-      console.log(`   Backup Codes: ${backupCodes.join(', ')}`);
+      console.log(`   2FA: Disabled (can be enabled through the UI)`);
       console.log('---');
     }
 
