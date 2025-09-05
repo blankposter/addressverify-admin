@@ -28,30 +28,111 @@ export class UsersService {
     @InjectModel('Subscription') private subscriptionModel: Model<Subscription>,
   ) {}
 
-  async getAllUsers(page = 1, limit = 10, search = ''): Promise<{
+  async getAllUsers(
+    page = 1, 
+    limit = 10, 
+    search = '',
+    filters: {
+      email?: string;
+      status?: string;
+      role?: string;
+      provider?: string;
+      emailVerified?: boolean;
+      hasSeenWelcome?: boolean;
+      stripe_id?: string;
+      limitation?: { min?: number; max?: number };
+      budgetAlert?: { min?: number; max?: number };
+      createdAt?: { start?: string; end?: string };
+      last_login?: { start?: string; end?: string };
+    } = {},
+    sort: { field?: string; order?: 'asc' | 'desc' } = { field: 'createdAt', order: 'desc' }
+  ): Promise<{
     users: UserWithSubscriptions[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     const skip = (page - 1) * limit;
-    const searchQuery = search 
-      ? { 
-          $or: [
-            { email: { $regex: search, $options: 'i' } },
-            { stripe_id: { $regex: search, $options: 'i' } }
-          ]
-        }
-      : {};
+    const query: any = {};
+
+    // Global search across all text fields
+    if (search) {
+      query.$or = [
+        { email: { $regex: search, $options: 'i' } },
+        { stripe_id: { $regex: search, $options: 'i' } },
+        { role: { $regex: search, $options: 'i' } },
+        { status: { $regex: search, $options: 'i' } },
+        { provider: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Specific field filters
+    if (filters.email) {
+      query.email = { $regex: filters.email, $options: 'i' };
+    }
+    if (filters.status) {
+      query.status = filters.status;
+    }
+    if (filters.role) {
+      query.role = filters.role;
+    }
+    if (filters.provider) {
+      query.provider = filters.provider;
+    }
+    if (filters.emailVerified !== undefined) {
+      query.emailVerified = filters.emailVerified;
+    }
+    if (filters.hasSeenWelcome !== undefined) {
+      query.hasSeenWelcome = filters.hasSeenWelcome;
+    }
+    if (filters.stripe_id) {
+      query.stripe_id = { $regex: filters.stripe_id, $options: 'i' };
+    }
+    if (filters.limitation) {
+      if (filters.limitation.min !== undefined || filters.limitation.max !== undefined) {
+        query.limitation = {};
+        if (filters.limitation.min !== undefined) query.limitation.$gte = filters.limitation.min;
+        if (filters.limitation.max !== undefined) query.limitation.$lte = filters.limitation.max;
+      }
+    }
+    if (filters.budgetAlert) {
+      if (filters.budgetAlert.min !== undefined || filters.budgetAlert.max !== undefined) {
+        query.budgetAlert = {};
+        if (filters.budgetAlert.min !== undefined) query.budgetAlert.$gte = filters.budgetAlert.min;
+        if (filters.budgetAlert.max !== undefined) query.budgetAlert.$lte = filters.budgetAlert.max;
+      }
+    }
+    if (filters.createdAt) {
+      if (filters.createdAt.start || filters.createdAt.end) {
+        query.createdAt = {};
+        if (filters.createdAt.start) query.createdAt.$gte = new Date(filters.createdAt.start);
+        if (filters.createdAt.end) query.createdAt.$lte = new Date(filters.createdAt.end);
+      }
+    }
+    if (filters.last_login) {
+      if (filters.last_login.start || filters.last_login.end) {
+        query.last_login = {};
+        if (filters.last_login.start) query.last_login.$gte = new Date(filters.last_login.start);
+        if (filters.last_login.end) query.last_login.$lte = new Date(filters.last_login.end);
+      }
+    }
+
+    // Build sort object
+    const sortObject: any = {};
+    if (sort.field) {
+      sortObject[sort.field] = sort.order === 'asc' ? 1 : -1;
+    } else {
+      sortObject.createdAt = -1;
+    }
 
     const [users, total] = await Promise.all([
       this.userModel
-        .find(searchQuery)
-        .sort({ createdAt: -1 })
+        .find(query)
+        .sort(sortObject)
         .skip(skip)
         .limit(limit)
         .lean(),
-      this.userModel.countDocuments(searchQuery),
+      this.userModel.countDocuments(query),
     ]);
 
     const usersWithSubscriptions = await Promise.all(

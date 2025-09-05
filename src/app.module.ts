@@ -6,9 +6,8 @@ import { join } from 'path';
 import { AppController } from './app.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { CreditsModule } from './modules/credits/credits.module';
 import { RequestsModule } from './modules/requests/requests.module';
-import { PackagesModule } from './modules/packages/packages.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { AdminSeeder } from './database/seeds/admin.seed';
 import { Admin, AdminSchema } from './schemas/admin.schema';
 
@@ -29,9 +28,8 @@ import { Admin, AdminSchema } from './schemas/admin.schema';
     }),
     AuthModule,
     UsersModule,
-    CreditsModule,
     RequestsModule,
-    PackagesModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [AdminSeeder],

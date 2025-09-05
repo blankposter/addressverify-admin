@@ -110,9 +110,22 @@ export class RequestsService {
   async getAllRequests(
     page = 1,
     limit = 10,
-    statusCode?: number,
-    endpoint?: string,
-    userId?: string
+    search = '',
+    filters: {
+      endpoint?: string;
+      user_id?: string;
+      stripe_user_id?: string;
+      ip?: string;
+      user_agent?: string;
+      status_code?: number;
+      status_code_range?: { min?: number; max?: number };
+      subscription_id?: string;
+      cost?: { min?: number; max?: number };
+      response_time?: { min?: number; max?: number };
+      date?: { start?: string; end?: string };
+      createdAt?: { start?: string; end?: string };
+    } = {},
+    sort: { field?: string; order?: 'asc' | 'desc' } = { field: 'date', order: 'desc' }
   ): Promise<{
     requests: RequestWithUser[];
     total: number;
@@ -122,14 +135,90 @@ export class RequestsService {
     const skip = (page - 1) * limit;
     const query: any = {};
 
-    if (statusCode) query.status_code = statusCode;
-    if (endpoint) query.endpoint = { $regex: endpoint, $options: 'i' };
-    if (userId) query.user_id = userId;
+    // Global search across all text fields
+    if (search) {
+      query.$or = [
+        { endpoint: { $regex: search, $options: 'i' } },
+        { user_id: { $regex: search, $options: 'i' } },
+        { stripe_user_id: { $regex: search, $options: 'i' } },
+        { ip: { $regex: search, $options: 'i' } },
+        { user_agent: { $regex: search, $options: 'i' } },
+        { subscription_id: { $regex: search, $options: 'i' } },
+        { response_data: { $regex: search, $options: 'i' } },
+        { input_data: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Specific field filters
+    if (filters.endpoint) {
+      query.endpoint = { $regex: filters.endpoint, $options: 'i' };
+    }
+    if (filters.user_id) {
+      query.user_id = filters.user_id;
+    }
+    if (filters.stripe_user_id) {
+      query.stripe_user_id = { $regex: filters.stripe_user_id, $options: 'i' };
+    }
+    if (filters.ip) {
+      query.ip = { $regex: filters.ip, $options: 'i' };
+    }
+    if (filters.user_agent) {
+      query.user_agent = { $regex: filters.user_agent, $options: 'i' };
+    }
+    if (filters.status_code) {
+      query.status_code = filters.status_code;
+    }
+    if (filters.status_code_range) {
+      if (filters.status_code_range.min !== undefined || filters.status_code_range.max !== undefined) {
+        query.status_code = {};
+        if (filters.status_code_range.min !== undefined) query.status_code.$gte = filters.status_code_range.min;
+        if (filters.status_code_range.max !== undefined) query.status_code.$lte = filters.status_code_range.max;
+      }
+    }
+    if (filters.subscription_id) {
+      query.subscription_id = { $regex: filters.subscription_id, $options: 'i' };
+    }
+    if (filters.cost) {
+      if (filters.cost.min !== undefined || filters.cost.max !== undefined) {
+        query.cost = {};
+        if (filters.cost.min !== undefined) query.cost.$gte = filters.cost.min;
+        if (filters.cost.max !== undefined) query.cost.$lte = filters.cost.max;
+      }
+    }
+    if (filters.response_time) {
+      if (filters.response_time.min !== undefined || filters.response_time.max !== undefined) {
+        query.response_time = {};
+        if (filters.response_time.min !== undefined) query.response_time.$gte = filters.response_time.min;
+        if (filters.response_time.max !== undefined) query.response_time.$lte = filters.response_time.max;
+      }
+    }
+    if (filters.date) {
+      if (filters.date.start || filters.date.end) {
+        query.date = {};
+        if (filters.date.start) query.date.$gte = new Date(filters.date.start);
+        if (filters.date.end) query.date.$lte = new Date(filters.date.end);
+      }
+    }
+    if (filters.createdAt) {
+      if (filters.createdAt.start || filters.createdAt.end) {
+        query.createdAt = {};
+        if (filters.createdAt.start) query.createdAt.$gte = new Date(filters.createdAt.start);
+        if (filters.createdAt.end) query.createdAt.$lte = new Date(filters.createdAt.end);
+      }
+    }
+
+    // Build sort object
+    const sortObject: any = {};
+    if (sort.field) {
+      sortObject[sort.field] = sort.order === 'asc' ? 1 : -1;
+    } else {
+      sortObject.date = -1;
+    }
 
     const [requests, total] = await Promise.all([
       this.requestModel
         .find(query)
-        .sort({ date: -1 })
+        .sort(sortObject)
         .skip(skip)
         .limit(limit)
         .lean(),

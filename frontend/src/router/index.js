@@ -6,9 +6,8 @@ import Login from '@/views/Login.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import TwoFactorSetup from '@/views/TwoFactorSetup.vue'
 import Users from '@/views/Users.vue'
-import Credits from '@/views/Credits.vue'
 import Requests from '@/views/Requests.vue'
-import Packages from '@/views/Packages.vue'
+import Subscriptions from '@/views/Subscriptions.vue'
 
 const routes = [
   {
@@ -40,21 +39,15 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/credits',
-    name: 'Credits',
-    component: Credits,
-    meta: { requiresAuth: true }
-  },
-  {
     path: '/requests',
     name: 'Requests',
     component: Requests,
     meta: { requiresAuth: true }
   },
   {
-    path: '/packages',
-    name: 'Packages',
-    component: Packages,
+    path: '/subscriptions',
+    name: 'Subscriptions',
+    component: Subscriptions,
     meta: { requiresAuth: true }
   }
 ]
