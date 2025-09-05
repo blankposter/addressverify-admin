@@ -52,10 +52,7 @@ export class AdminSeeder {
       }
 
       // Create admin (password will be hashed by schema middleware)
-      const admin = new this.adminModel({
-        ...adminData,
-        passwordChangedAt: new Date(),
-      });
+      const admin = new this.adminModel(adminData);
 
       await admin.save();
 
