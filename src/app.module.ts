@@ -4,7 +4,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CreditsModule } from './modules/credits/credits.module';
@@ -35,6 +34,6 @@ import { Admin, AdminSchema } from './schemas/admin.schema';
     PackagesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AdminSeeder],
+  providers: [AdminSeeder],
 })
 export class AppModule {}
