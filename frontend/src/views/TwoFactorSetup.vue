@@ -186,7 +186,7 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import api from '@/lib/api'
+import api from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 
 const authStore = useAuthStore()
