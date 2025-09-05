@@ -72,21 +72,12 @@
                 </div>
                 
                 <MenuItem v-slot="{ active }">
-                  <button
-                    @click="showProfile = true"
-                    :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700 w-full text-left']"
-                  >
-                    Profile Settings
-                  </button>
-                </MenuItem>
-                
-                <MenuItem v-slot="{ active }">
-                  <button
-                    @click="show2FA = true"
-                    :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700 w-full text-left']"
+                  <router-link
+                    to="/2fa-setup"
+                    :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']"
                   >
                     Two-Factor Auth
-                  </button>
+                  </router-link>
                 </MenuItem>
                 
                 <MenuItem v-slot="{ active }">
@@ -180,9 +171,6 @@ import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
-
-const showProfile = ref(false)
-const show2FA = ref(false)
 
 const handleLogout = async () => {
   await authStore.logout()

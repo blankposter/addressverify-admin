@@ -92,20 +92,23 @@
               </div>
             </div>
 
-            <!-- Revenue (MTD) -->
+            <!-- Total Requests -->
             <div class="bg-white overflow-hidden shadow rounded-lg">
               <div class="p-5">
                 <div class="flex items-center">
                   <div class="flex-shrink-0">
-                    <CurrencyDollarIcon class="h-6 w-6 text-green-400" />
+                    <DocumentTextIcon class="h-6 w-6 text-blue-400" />
                   </div>
                   <div class="ml-5 w-0 flex-1">
                     <dl>
                       <dt class="text-sm font-medium text-gray-500 truncate">
-                        Revenue (MTD)
+                        Total Requests
                       </dt>
                       <dd class="text-lg font-medium text-gray-900">
-                        ${{ (stats.monthlyRevenue || 0).toLocaleString() }}
+                        {{ (stats.totalRequests || 0).toLocaleString() }}
+                      </dd>
+                      <dd class="text-xs text-gray-500">
+                        {{ stats.successRate || 0 }}% success rate
                       </dd>
                     </dl>
                   </div>
@@ -166,11 +169,11 @@
                   </router-link>
                   
                   <router-link
-                    to="/credits"
+                    to="/subscriptions"
                     class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                   >
                     <CreditCardIcon class="-ml-1 mr-2 h-5 w-5" />
-                    Manage Credits
+                    Manage Subscriptions
                   </router-link>
                 </div>
               </div>
@@ -192,6 +195,7 @@ import {
   DocumentTextIcon,
 } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '@/stores/auth'
+import { usersAPI, requestsAPI, subscriptionsAPI } from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 
 const authStore = useAuthStore()
@@ -200,7 +204,9 @@ const stats = ref({
   totalUsers: 0,
   activeSubscriptions: 0,
   failedRequests: 0,
-  monthlyRevenue: 0,
+  totalRequests: 0,
+  totalSubscriptions: 0,
+  successRate: 0,
 })
 
 const activities = ref([])
@@ -213,33 +219,65 @@ const formatDate = (timestamp) => {
 const loadDashboardData = async () => {
   loading.value = true
   try {
-    // Mock data for now - replace with actual API calls
+    // Load real data from APIs
+    const [userStats, requestStats, subscriptionStats] = await Promise.all([
+      usersAPI.getStats(),
+      requestsAPI.getRequestStats(),
+      subscriptionsAPI.getStats()
+    ])
+
     stats.value = {
-      totalUsers: 1250,
-      activeSubscriptions: 890,
-      failedRequests: 23,
-      monthlyRevenue: 45600,
+      totalUsers: userStats.data.totalUsers || 0,
+      activeSubscriptions: subscriptionStats.data.activeSubscriptions || 0,
+      failedRequests: requestStats.data.failedRequests || 0,
+      totalRequests: requestStats.data.totalRequests || 0,
+      totalSubscriptions: subscriptionStats.data.totalSubscriptions || 0,
+      successRate: requestStats.data.successRate || 0,
+    }
+
+    // Generate recent activities based on real data
+    activities.value = []
+    
+    // Add recent failed requests if any
+    if (requestStats.data.recentFailures && requestStats.data.recentFailures.length > 0) {
+      requestStats.data.recentFailures.slice(0, 3).forEach((failure, index) => {
+        activities.value.push({
+          id: `failure-${index}`,
+          description: `Failed API request: ${failure.endpoint} (${failure.status_code}) from ${failure.userEmail || 'Unknown user'}`,
+          timestamp: new Date(failure.date || failure.createdAt)
+        })
+      })
     }
     
-    activities.value = [
-      {
-        id: 1,
-        description: 'New user registered: john@example.com',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30) // 30 minutes ago
-      },
-      {
-        id: 2,
-        description: 'Subscription upgraded: Enterprise plan',
-        timestamp: new Date(Date.now() - 1000 * 60 * 120) // 2 hours ago
-      },
-      {
-        id: 3,
-        description: 'Failed API request detected',
-        timestamp: new Date(Date.now() - 1000 * 60 * 300) // 5 hours ago
-      }
-    ]
+    // Add recent subscriptions if any
+    if (subscriptionStats.data.recentSubscriptions && subscriptionStats.data.recentSubscriptions.length > 0) {
+      subscriptionStats.data.recentSubscriptions.slice(0, 2).forEach((subscription, index) => {
+        activities.value.push({
+          id: `subscription-${index}`,
+          description: `Subscription ${subscription.status}: ${subscription.sub_name} for ${subscription.userEmail || 'Unknown user'}`,
+          timestamp: new Date(subscription.createdAt)
+        })
+      })
+    }
+    
+    // Sort activities by timestamp (newest first)
+    activities.value.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    
+    // Keep only the latest 5 activities
+    activities.value = activities.value.slice(0, 5)
+    
   } catch (error) {
     console.error('Error loading dashboard data:', error)
+    // Fallback to empty data
+    stats.value = {
+      totalUsers: 0,
+      activeSubscriptions: 0,
+      failedRequests: 0,
+      totalRequests: 0,
+      totalSubscriptions: 0,
+      successRate: 0,
+    }
+    activities.value = []
   } finally {
     loading.value = false
   }
