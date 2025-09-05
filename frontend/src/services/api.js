@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create axios instance
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: '/',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -37,40 +37,37 @@ api.interceptors.response.use(
 
 // API endpoints
 export const authAPI = {
-  login: (credentials) => api.post('/admin/auth/login', credentials),
-  logout: () => api.post('/admin/auth/logout'),
-  getProfile: () => api.get('/admin/auth/profile'),
-  setup2FA: () => api.post('/admin/auth/2fa/setup'),
-  verify2FA: (token) => api.post('/admin/auth/2fa/verify', { token }),
-  disable2FA: (password) => api.post('/admin/auth/2fa/disable', { password }),
+  login: (credentials) => api.post('/api/admin/auth/login', credentials),
+  logout: () => api.post('/api/admin/auth/logout'),
+  getProfile: () => api.get('/api/admin/auth/profile'),
+  setup2FA: () => api.post('/api/admin/auth/2fa/setup'),
+  verify2FA: (token) => api.post('/api/admin/auth/2fa/verify', { token }),
+  disable2FA: (password) => api.post('/api/admin/auth/2fa/disable', { password }),
 }
 
 export const usersAPI = {
-  getUsers: (params) => api.get('/admin/users', { params }),
-  getUser: (id) => api.get(`/admin/users/${id}`),
-  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
-  deleteUser: (id) => api.delete(`/admin/users/${id}`),
-  getUserSubscriptions: (userId) => api.get(`/admin/users/${userId}/subscriptions`),
-}
-
-export const creditsAPI = {
-  getUserCredits: (userId) => api.get(`/admin/users/${userId}/credits`),
-  addCredits: (userId, amount) => api.post(`/admin/users/${userId}/credits`, { amount }),
-  removeCredits: (userId, amount) => api.delete(`/admin/users/${userId}/credits`, { data: { amount } }),
-  getCreditHistory: (userId) => api.get(`/admin/users/${userId}/credit-history`),
+  getUsers: (params) => api.get('/api/admin/users', { params }),
+  getUser: (id) => api.get(`/api/admin/users/${id}`),
+  updateUserStatus: (id, status) => api.put(`/api/admin/users/${id}/status`, { status }),
+  updateUserLimitation: (id, limitation) => api.put(`/api/admin/users/${id}/limitation`, { limitation }),
+  getStats: () => api.get('/api/admin/users/stats'),
 }
 
 export const requestsAPI = {
-  getRequests: (params) => api.get('/admin/requests', { params }),
-  getFailedRequests: (params) => api.get('/admin/requests/failed', { params }),
-  getRequestStats: () => api.get('/admin/requests/stats'),
+  getAllRequests: (params) => api.get('/api/admin/requests/all', { params }),
+  getFailedRequests: (params) => api.get('/api/admin/requests/failed', { params }),
+  getRequestStats: () => api.get('/api/admin/requests/stats'),
+  getRequestsByEndpoint: () => api.get('/api/admin/requests/by-endpoint'),
+  getErrorsTimeline: (hours) => api.get('/api/admin/requests/errors-timeline', { params: { hours } }),
 }
 
-export const packagesAPI = {
-  getPackages: () => api.get('/admin/packages'),
-  createPackage: (data) => api.post('/admin/packages', data),
-  updatePackage: (id, data) => api.put(`/admin/packages/${id}`, data),
-  deletePackage: (id) => api.delete(`/admin/packages/${id}`),
+export const subscriptionsAPI = {
+  getSubscriptions: (params) => api.get('/api/admin/subscriptions', { params }),
+  getSubscription: (id) => api.get(`/api/admin/subscriptions/${id}`),
+  updateSubscriptionStatus: (id, status) => api.put(`/api/admin/subscriptions/${id}/status`, { status }),
+  getStats: () => api.get('/api/admin/subscriptions/stats'),
+  getExpiringSubscriptions: (days) => api.get('/api/admin/subscriptions/expiring', { params: { days } }),
+  getSubscriptionsByUser: (userId) => api.get(`/api/admin/subscriptions/user/${userId}`),
 }
 
 export default api
