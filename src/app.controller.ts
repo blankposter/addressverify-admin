@@ -5,15 +5,9 @@ import { join } from 'path';
 @Controller()
 export class AppController {
   
-  // Catch-all route for Vue Router (SPA routing)
-  @Get('*')
+  // Specific routes for Vue Router (SPA routing)
+  @Get(['/', '/login', '/dashboard', '/users', '/credits', '/requests', '/packages', '/2fa-setup'])
   serveFrontend(@Res() res: Response) {
-    // Don't serve index.html for API routes
-    if (res.req.url.startsWith('/api/')) {
-      return res.status(404).send('API endpoint not found');
-    }
-    
-    // Serve index.html for all other routes (Vue Router will handle them)
     return res.sendFile(join(__dirname, '..', 'public', 'index.html'));
   }
 }
